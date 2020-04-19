@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Serverless Framework Configuration",
+  "description": "Schema file defining the serverless framework configuration file",
+  "type": "object",
+  "required": ["service"],
+  "properties": {
+    "service": {
+      "type": ["object", "string"],
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "awsKmsKeyArn": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

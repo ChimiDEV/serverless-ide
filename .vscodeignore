@@ -1,0 +1,12 @@
+.vscode/**
+docs/**
+test/**
+src/**
+.gitignore
+**/.eslintrc
+**/.babelrc
+**/.editorconfig
+**/.eslintignore
+**/.prettierrc
+**/.prettierignore
+**/jest.config.js

@@ -1,0 +1,83 @@
+{
+  "name": "serverless-ide",
+  "displayName": "serverless-ide",
+  "description": "Language Server for the serverless framework",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.44.0"
+  },
+  "categories": [
+    "Linters",
+    "Formatters",
+    "Programming Languages"
+  ],
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Serverless Language Server Configuration",
+      "properties": {
+        "slsLanguageServer.showYAMLError": {
+          "scope": "window",
+          "type": "boolean",
+          "default": true
+        },
+        "slsLanguageServer.trace.server": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "messages",
+          "description": "Traces the communication between VS Code and the language server."
+        }
+      }
+    }
+  },
+  "activationEvents": [
+    "workspaceContains:serverless.yml",
+    "onLanguage:yaml",
+    "onLanguage:yml",
+    "onFileSystem:file://serverless.yml"
+  ],
+  "main": "./dist/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "format": "prettier --write \"**/*.{md,yaml,yml,js,json}\"",
+    "test": "LOG_LEVEL=debug jest",
+    "prebuild": "rm -rf dist",
+    "build": "babel --out-dir dist src -s",
+    "qa": "npm run lint:fix && npm run format && npm run test"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.0",
+    "@babel/node": "^7.8.7",
+    "@babel/preset-env": "^7.9.5",
+    "@types/vscode": "^1.44.0",
+    "babel-eslint": "^10.1.0",
+    "core-js": "^3.6.5",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-jest": "^23.8.2",
+    "eslint-plugin-json": "^2.1.1",
+    "jest": "^25.3.0",
+    "prettier": "^2.0.4",
+    "vscode-test": "^1.3.0"
+  },
+  "dependencies": {
+    "ajv": "^6.12.0",
+    "await-to-js": "^2.1.1",
+    "vscode-languageclient": "^6.1.3",
+    "vscode-languageserver": "^6.1.1",
+    "vscode-languageserver-textdocument": "^1.0.1",
+    "yaml": "^1.9.1",
+    "yaml-source-map": "^2.1.1"
+  },
+  "author": "ChimiDEV <ChimiDEV@gmail.com>"
+}

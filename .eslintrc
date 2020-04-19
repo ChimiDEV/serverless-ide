@@ -1,0 +1,13 @@
+{
+  "parser": "babel-eslint",
+  "extends": ["airbnb-base", "prettier", "plugin:json/recommended"],
+  "plugins": ["jest", "json"],
+  "env": {
+    "jest/globals": true,
+    "es2020": true,
+    "browser": false,
+    "commonjs": true,
+    "es6": true,
+    "node": true
+  }
+}
