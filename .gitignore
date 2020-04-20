@@ -2,6 +2,7 @@ dist/
 .idea/
 .vscode/
 vscode-api.d.ts
+vscode-ls.d.ts
 
 # Logs
 logs
