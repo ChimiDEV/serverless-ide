@@ -1,8 +1,5 @@
-/* --------------------------------------------------------------------------------------------
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
 import Ajv from 'ajv';
+import _ from 'lodash/fp';
 import {
   createConnection,
   TextDocuments,
@@ -11,14 +8,19 @@ import {
   TextDocumentSyncKind,
   DiagnosticSeverity,
   Range,
+  CompletionItemKind,
+  MarkupKind,
 } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import parseYML from './utils/parseYml';
+import baseDocUtil from './utils/document';
 import schema from '../schemas/serverless.schema.json';
+import customSymbolTree from './utils/symbolTree';
 
 const connection = createConnection(ProposedFeatures.all);
 const cConsole = connection.console;
 const documents = new TextDocuments(TextDocument);
+const { file } = baseDocUtil(documents);
 // Keep the client capabilities as global
 let clientCapabilities;
 
@@ -36,7 +38,7 @@ const getSettings = resourceUri =>
     });
 
 connection.onInitialize(({ capabilities }) => {
-  // Keep client capabilities in state
+  // Keep client capabilities in cache
   clientCapabilities = capabilities;
 
   return {
@@ -63,15 +65,18 @@ connection.onInitialized(() => {
       undefined,
     );
   }
+  connection.window.showInformationMessage(
+    'Serverless Language Server started.',
+  );
 });
 
 /**
  *
  * @param {TextDocument} document
+ * @param {*} settings
  */
 const validateServerlessYml = async (document, settings) => {
   cConsole.log('Starting to validate Document');
-
   // First check if the yaml file is valid
   const [err, sls, sourceMap] = parseYML(document.getText());
   if (err) {
@@ -152,18 +157,44 @@ const validateServerlessYml = async (document, settings) => {
 };
 
 documents.onDidChangeContent(async ({ document }) => {
-  connection.sendDiagnostics({
-    uri: document.uri,
-    version: document.version,
-    diagnostics: await validateServerlessYml(
-      document,
-      await getSettings(document.uri),
-    ),
-  });
+  // connection.sendDiagnostics({
+  //   uri: document.uri,
+  //   version: document.version,
+  //   diagnostics: await validateServerlessYml(
+  //     document,
+  //     await getSettings(document.uri),
+  //   ),
+  // });
 });
 
-connection.onCompletion(() => {
-  return [];
+connection.onCompletion(async params => {
+  const [err, sls, , slsDoc] = parseYML(
+    file(params.textDocument.uri).getText(),
+  );
+
+  if (err) {
+    return [];
+  }
+
+  console.log(customSymbolTree(sls, slsDoc).symbols);
+  // console.log(slsDoc.get('custom').items[0].key.comment);
+  // console.log(slsDoc.get('custom').items[0].key.commentBefore);
+  // console.log(slsDoc.get('custom').items[0].value);
+  // console.log(slsDoc.get('custom').items[0].value.comment);
+  // console.log(slsDoc.get('custom').items[0].value.commentBefore);
+
+  return _.pipe(
+    _.map(({ label, keyPath, description }) => ({
+      label,
+      kind: CompletionItemKind.Variable,
+      detail: `includes: custom.${keyPath}`,
+      documentation: {
+        value: `${description}  \n[serverless framework](https://serverless.com)`,
+        kind: MarkupKind.Markdown,
+      }, // Markdown string
+      insertText: `\${{self:custom.${keyPath}}}`,
+    })),
+  )(customSymbolTree(sls, slsDoc).symbols);
 });
 
 // // This handler provides the initial list of the completion items.
