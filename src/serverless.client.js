@@ -1,5 +1,6 @@
 import path from 'path';
-import { workspace } from 'vscode';
+// eslint-disable-next-line import/no-unresolved
+import { workspace } from 'vscode'; // vscode does exist
 
 import { LanguageClient, TransportKind } from 'vscode-languageclient';
 

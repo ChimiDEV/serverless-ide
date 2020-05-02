@@ -1,0 +1,19 @@
+title Autocompletion for custom variables
+
+participant "IDE (Language Client)" as client
+participant "Language Server" as server
+
+
+box over client,server:Text Synchronisation for 'serverless.yml'
+client->server: textDocument/completion
+
+
+
+activate server
+server->server: parseYML
+server-xclient: parseError | [ ]
+
+server->server: parseSymbolTree
+note right of server: The **Serverless Symbol Tree** contains every custom property and its corresponding keypath
+deactivate server
+server->client: [...possibleCompletions]
