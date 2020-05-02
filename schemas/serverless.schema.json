@@ -16,6 +16,245 @@
           "type": "string"
         }
       }
+    },
+    "frameworkVersion": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "runtime": {
+          "type": "string"
+        },
+        "stage": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        },
+        "stackName": {
+          "type": "string"
+        },
+        "apiName": {
+          "type": "string"
+        },
+        "websocketsApiName": {
+          "type": "string"
+        },
+        "websocketsApiRouteSelectionExpression": {
+          "type": "string"
+        },
+        "profile": {
+          "type": "string"
+        },
+        "memorySize": {
+          "type": "number"
+        },
+        "reservedConcurrency": {
+          "type": "number"
+        },
+        "timeout": {
+          "type": "number"
+        },
+        "logRetentionInDays": {
+          "type": "number"
+        },
+        "deploymentBucket": {
+          "type": "object"
+        },
+        "deploymentPrefix": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "rolePermissionsBoundary": {
+          "type": "string"
+        },
+        "cfnRole": {
+          "type": "string"
+        },
+        "versionFunctions": {
+          "type": "boolean"
+        },
+        "environment": {
+          "type": "object"
+        },
+        "endpointType": {
+          "type": "string"
+        },
+        "apiKeys": {
+          "type": "array"
+        },
+        "apiGateway": {
+          "type": "object"
+        },
+        "alb": {
+          "type": "object"
+        },
+        "httpApi": {
+          "type": "object"
+        },
+        "usagePlan": {
+          "type": "object"
+        },
+        "stackTags": {
+          "type": "object"
+        },
+        "iamManagedPolicies": {
+          "type": "array"
+        },
+        "iamRoleStatements": {
+          "type": "array"
+        },
+        "stackPolicy": {
+          "type": "array"
+        },
+        "vpc": {
+          "type": "object"
+        },
+        "notificationArns": {
+          "type": "array"
+        },
+        "resourcePolicy": {
+          "type": "array"
+        },
+        "tags": {
+          "type": "object"
+        },
+        "tracing": {
+          "type": "object"
+        },
+        "logs": {
+          "type": "object"
+        }
+      }
+    },
+    "package": {
+      "type": "object",
+      "properties": {
+        "include": {
+          "type": "array"
+        },
+        "exclude": {
+          "type": "array"
+        },
+        "excludeDevDependencies": {
+          "type": "boolean"
+        },
+        "artifact": {
+          "type": "string"
+        },
+        "individually": {
+          "type": "boolean"
+        }
+      }
+    },
+    "functions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "handler": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "memorySize": {
+            "type": "number"
+          },
+          "reservedConcurrency": {
+            "type": "number"
+          },
+          "provisionedConcurrency": {
+            "type": "number"
+          },
+          "runtime": {
+            "type": "string"
+          },
+          "timeout": {
+            "type": "number"
+          },
+          "role": {
+            "type": "string"
+          },
+          "onError": {
+            "type": "string"
+          },
+          "awsKmsKeyArn": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "object"
+          },
+          "tags": {
+            "type": "object"
+          },
+          "vpc": {
+            "type": "object"
+          },
+          "package": {
+            "type": "object"
+          },
+          "layers": {
+            "type": "array"
+          },
+          "tracing": {
+            "type": "boolean"
+          },
+          "condition": {
+            "type": "string"
+          },
+          "dependsOn": {
+            "type": "array"
+          },
+          "destinations": {
+            "type": "object"
+          },
+          "events": {
+            "type": "array"
+          }
+        }
+      }
+    },
+    "layers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "compatibleRuntimes": {
+            "type": "array"
+          },
+          "licenseInfo": {
+            "type": "string"
+          },
+          "allowedAccounts": {
+            "type": "array"
+          },
+          "retain": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "resources": {
+      "type": "object"
     }
   }
 }
