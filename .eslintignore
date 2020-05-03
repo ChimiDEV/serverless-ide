@@ -2,6 +2,7 @@ dist/
 .idea/
 site/
 docs/
+jest.config.js
 
 # Dependency directories
 node_modules/
