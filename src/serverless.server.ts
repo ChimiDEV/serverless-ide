@@ -10,22 +10,25 @@ import {
   Range,
   CompletionItemKind,
   MarkupKind,
+  Diagnostic,
+  ClientCapabilities,
 } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import parseYML from './utils/parseYml';
+import { parseYML, LinePos } from './utils/yml';
 import baseDocUtil from './utils/document';
-import schema from '../schemas/serverless.schema.json';
+import schema from './schemas/serverless.schema.json';
 import customSymbolTree from './utils/symbolTree';
 
 const connection = createConnection(ProposedFeatures.all);
 const cConsole = connection.console;
 const documents = new TextDocuments(TextDocument);
 const { file } = baseDocUtil(documents);
+
 // Keep the client capabilities as global
-let clientCapabilities;
+let clientCapabilities: ClientCapabilities;
 
 const settingsCache = {};
-const getSettings = resourceUri =>
+const getSettings = (resourceUri: string): Promise<unknown> =>
   settingsCache[resourceUri] ??
   connection.workspace
     .getConfiguration({
@@ -70,19 +73,22 @@ connection.onInitialized(() => {
   );
 });
 
-/**
- *
- * @param {TextDocument} document
- * @param {*} settings
- */
-const validateServerlessYml = async (document, settings) => {
+const validateServerlessYml = async (
+  document: TextDocument,
+  settings: { showYAMLError: boolean },
+): Promise<Diagnostic[]> => {
   cConsole.log('Starting to validate Document');
   // First check if the yaml file is valid
   const [err, sls, sourceMap] = parseYML(document.getText());
   if (err) {
     cConsole.error('Failed to parse YAML');
     console.log(err);
-    const { start, end } = err.linePos;
+
+    const { start, end } = err.linePos as {
+      start: LinePos;
+      end: LinePos;
+    };
+
     return settings.showYAMLError
       ? [
           {
@@ -101,13 +107,12 @@ const validateServerlessYml = async (document, settings) => {
       : [];
   }
 
-  // console.log(sls);
   // Validate against serverless schema
   const ajv = new Ajv();
   const validate = ajv.compile(schema);
   const valid = validate(sls);
   if (!valid) {
-    const validateError = validate.errors[0];
+    const validateError = validate.errors?.[0]!;
     if (!validateError.dataPath) {
       return [
         {
@@ -115,15 +120,16 @@ const validateServerlessYml = async (document, settings) => {
           severity: DiagnosticSeverity.Error,
           code: 'INVALID_SLS_CONFIG',
           source: 'Serverless Language Server',
-          message: validateError.message,
+          message: validateError.message!,
         },
       ];
     }
-    const { start: errStart, end: errEnd } = sourceMap.lookup(
+
+    const { start: errStart, end: errEnd } = sourceMap!.lookup(
       validateError.dataPath.split('.').slice(1),
-      sls,
+      sls!,
     );
-    console.log({ errStart, errEnd });
+
     return [
       {
         range: Range.create(
@@ -135,53 +141,35 @@ const validateServerlessYml = async (document, settings) => {
         severity: DiagnosticSeverity.Error,
         code: 'INVALID_SLS_CONFIG',
         source: 'Serverless Language Server',
-        message: validateError.message,
+        message: validateError.message!,
       },
     ];
   }
 
   return [];
-  // connection.sendDiagnostics({
-  //   uri: document.uri,
-  //   version: document.version,
-  //   diagnostics: [
-  //     Diagnostic.create(
-  //       Range.create(0, 0, 0, 10),
-  //       'Something is wrong here',
-  //       DiagnosticSeverity.Error,
-  //       'FAILED_PARSE',
-  //       'Serverless Language Server',
-  //     ),
-  //   ],
-  // });
 };
 
-documents.onDidChangeContent(async ({ document }) => {
-  // connection.sendDiagnostics({
-  //   uri: document.uri,
-  //   version: document.version,
-  //   diagnostics: await validateServerlessYml(
-  //     document,
-  //     await getSettings(document.uri),
-  //   ),
-  // });
-});
+// documents.onDidChangeContent(async ({ document }) => {
+// connection.sendDiagnostics({
+//   uri: document.uri,
+//   version: document.version,
+//   diagnostics: await validateServerlessYml(
+//     document,
+//     await getSettings(document.uri),
+//   ),
+// });
+// });
 
 connection.onCompletion(async params => {
   const [err, sls, , slsDoc] = parseYML(
-    file(params.textDocument.uri).getText(),
+    file(params.textDocument.uri)!.getText(),
   );
 
   if (err) {
     return [];
   }
 
-  console.log(customSymbolTree(sls, slsDoc).symbols);
-  // console.log(slsDoc.get('custom').items[0].key.comment);
-  // console.log(slsDoc.get('custom').items[0].key.commentBefore);
-  // console.log(slsDoc.get('custom').items[0].value);
-  // console.log(slsDoc.get('custom').items[0].value.comment);
-  // console.log(slsDoc.get('custom').items[0].value.commentBefore);
+  console.log(customSymbolTree(sls!, slsDoc!).symbols);
 
   return _.pipe(
     _.map(({ label, keyPath, description }) => ({
@@ -194,7 +182,7 @@ connection.onCompletion(async params => {
       }, // Markdown string
       insertText: `\${{self:custom.${keyPath}}}`,
     })),
-  )(customSymbolTree(sls, slsDoc).symbols);
+  )(customSymbolTree(sls!, slsDoc!).symbols);
 });
 
 // // This handler provides the initial list of the completion items.
