@@ -10,14 +10,12 @@ import {
   Range,
   CompletionItemKind,
   MarkupKind,
-  Diagnostic,
-  ClientCapabilities,
 } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { parseYML, LinePos } from './utils/yml';
+import { parseYML } from './utils/yml';
 import baseDocUtil from './utils/document';
-import schema from './schemas/serverless.schema.json';
-import customSymbolTree, { ServerlessSymbolTree } from './utils/symbolTree';
+import schema from '../schemas/serverless.schema.json';
+import customSymbolTree from './utils/symbolTree';
 import { validateSymbols } from './utils/validate';
 
 const connection = createConnection(ProposedFeatures.all);
@@ -26,13 +24,13 @@ const documents = new TextDocuments(TextDocument);
 const { file } = baseDocUtil(documents);
 
 // Current Cache Solution is a global variable
-let symbolTree: ServerlessSymbolTree;
+let symbolTree;
 
 // Keep the client capabilities as global
-let clientCapabilities: ClientCapabilities;
+let clientCapabilities;
 
 const settingsCache = {};
-const getSettings = (resourceUri: string): Promise<unknown> =>
+const getSettings = resourceUri =>
   settingsCache[resourceUri] ??
   connection.workspace
     .getConfiguration({
@@ -77,10 +75,7 @@ connection.onInitialized(() => {
   );
 });
 
-const validateServerlessYml = async (
-  document: TextDocument,
-  settings: { showYAMLError: boolean },
-): Promise<Diagnostic[]> => {
+const validateServerlessYml = async (document, settings) => {
   cConsole.log('Starting to validate Document');
   // First check if the yaml file is valid
   const [err, sls, sourceMap] = parseYML(document.getText());
@@ -88,10 +83,7 @@ const validateServerlessYml = async (
     cConsole.error('Failed to parse YAML');
     console.log(err);
 
-    const { start, end } = err.linePos as {
-      start: LinePos;
-      end: LinePos;
-    };
+    const { start, end } = err.linePos;
 
     return settings.showYAMLError
       ? [
@@ -116,7 +108,7 @@ const validateServerlessYml = async (
   const validate = ajv.compile(schema);
   const valid = validate(sls);
   if (!valid) {
-    const validateError = validate.errors?.[0]!;
+    const validateError = validate.errors?.[0];
     if (!validateError.dataPath) {
       return [
         {
@@ -124,14 +116,14 @@ const validateServerlessYml = async (
           severity: DiagnosticSeverity.Error,
           code: 'INVALID_SLS_CONFIG',
           source: 'Serverless Language Server',
-          message: validateError.message!,
+          message: validateError.message,
         },
       ];
     }
 
-    const { start: errStart, end: errEnd } = sourceMap!.lookup(
+    const { start: errStart, end: errEnd } = sourceMap.lookup(
       validateError.dataPath.split('.').slice(1),
-      sls!,
+      sls,
     );
 
     return [
@@ -145,7 +137,7 @@ const validateServerlessYml = async (
         severity: DiagnosticSeverity.Error,
         code: 'INVALID_SLS_CONFIG',
         source: 'Serverless Language Server',
-        message: validateError.message!,
+        message: validateError.message,
       },
     ];
   }
@@ -167,7 +159,7 @@ documents.onDidChangeContent(async ({ document }) => {
   // Validate YML and if correct serverless
 
   // Parse and cache Symbol Tree
-  symbolTree = customSymbolTree(sls, slsDoc!);
+  symbolTree = customSymbolTree(sls, slsDoc);
 
   // Validate if only correct custom variables are used
   console.log(validateSymbols(sls));
@@ -184,12 +176,14 @@ documents.onDidChangeContent(async ({ document }) => {
 
 connection.onCompletion(async params => {
   const [err, sls, , slsDoc] = parseYML(
-    file(params.textDocument.uri)!.getText(),
+    file(params.textDocument.uri).getText(),
   );
 
   if (err) {
     return [];
   }
+
+  console.log(customSymbolTree(sls, slsDoc).symbols);
 
   return _.pipe(
     _.map(({ label, keyPath, description }) => ({
@@ -202,7 +196,7 @@ connection.onCompletion(async params => {
       }, // Markdown string
       insertText: `\${{self:custom.${keyPath}}}`,
     })),
-  )(customSymbolTree(sls!, slsDoc!).symbols);
+  )(customSymbolTree(sls, slsDoc).symbols);
 });
 
 // // This handler provides the initial list of the completion items.
