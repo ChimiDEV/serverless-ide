@@ -17,12 +17,16 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { parseYML, LinePos } from './utils/yml';
 import baseDocUtil from './utils/document';
 import schema from './schemas/serverless.schema.json';
-import customSymbolTree from './utils/symbolTree';
+import customSymbolTree, { ServerlessSymbolTree } from './utils/symbolTree';
+import { validateSymbols } from './utils/validate';
 
 const connection = createConnection(ProposedFeatures.all);
 const cConsole = connection.console;
 const documents = new TextDocuments(TextDocument);
 const { file } = baseDocUtil(documents);
+
+// Current Cache Solution is a global variable
+let symbolTree: ServerlessSymbolTree;
 
 // Keep the client capabilities as global
 let clientCapabilities: ClientCapabilities;
@@ -149,16 +153,34 @@ const validateServerlessYml = async (
   return [];
 };
 
-// documents.onDidChangeContent(async ({ document }) => {
-// connection.sendDiagnostics({
-//   uri: document.uri,
-//   version: document.version,
-//   diagnostics: await validateServerlessYml(
-//     document,
-//     await getSettings(document.uri),
-//   ),
-// });
-// });
+documents.onDidChangeContent(async ({ document }) => {
+  const [err, sls, , slsDoc] = parseYML(document.getText());
+
+  if (err) {
+    return;
+  }
+
+  if (!sls) {
+    return;
+  }
+
+  // Validate YML and if correct serverless
+
+  // Parse and cache Symbol Tree
+  symbolTree = customSymbolTree(sls, slsDoc!);
+
+  // Validate if only correct custom variables are used
+  console.log(validateSymbols(sls));
+
+  // connection.sendDiagnostics({
+  //   uri: document.uri,
+  //   version: document.version,
+  //   diagnostics: await validateServerlessYml(
+  //     document,
+  //     await getSettings(document.uri),
+  //   ),
+  // });
+});
 
 connection.onCompletion(async params => {
   const [err, sls, , slsDoc] = parseYML(
@@ -168,8 +190,6 @@ connection.onCompletion(async params => {
   if (err) {
     return [];
   }
-
-  console.log(customSymbolTree(sls!, slsDoc!).symbols);
 
   return _.pipe(
     _.map(({ label, keyPath, description }) => ({

@@ -2,13 +2,14 @@ import _ from 'lodash/fp';
 import { getValueNode, ParsedYML } from './yml';
 import flatten from 'flat';
 
-type ServerlessCustomSymbol = {
+export type ServerlessCustomSymbol = {
   label: string;
   keyPath: string;
+  unused: boolean;
   description?: string | null;
 };
 
-type ServerlessSymbolTree = {
+export type ServerlessSymbolTree = {
   _custom: object;
   get(path: string | string[]): unknown;
   symbols: ServerlessCustomSymbol[];
@@ -26,6 +27,7 @@ const extractSymbols = (
     _.map((keyPath: string) => ({
       label: lastKeyPart(keyPath)!,
       keyPath,
+      unused: false,
       description: getValueNode(document)(keyPath).comment,
     })),
   );
